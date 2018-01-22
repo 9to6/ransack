@@ -2,10 +2,12 @@ require 'ransack/nodes'
 require 'ransack/context'
 Ransack::Adapters.object_mapper.require_search
 require 'ransack/naming'
+require 'ransack/tag'
 
 module Ransack
   class Search
     include Naming
+    include Tag
 
     attr_reader :base, :context
 
@@ -22,6 +24,11 @@ module Ransack
       else
         params = {}
       end
+      # on tag mode
+      if options.has_key?(:tag_mode)
+        build_params_for_tag(params)
+      end
+
       @context = options[:context] || Context.for(object, options)
       @context.auth_object = options[:auth_object]
       @base = Nodes::Grouping.new(
