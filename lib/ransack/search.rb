@@ -25,6 +25,7 @@ module Ransack
         params = {}
       end
       # on tag mode
+      @tags = []
       if options.has_key?(:tag_mode)
         build_params_for_tag(params)
       end

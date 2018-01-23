@@ -2,7 +2,6 @@ module Ransack
   module Tag
     def build_params_for_tag(params)
       return {} if params.empty?
-      @tags = [] if @tags.nil?
       ret = {}
       params.keys.each do |key|
         # key for sorting is ignored
