@@ -40,7 +40,11 @@ module Ransack
     end
 
     def result(opts = {})
-      @context.evaluate(self, opts)
+      if object.respond_to?(:tagged_with) and !@tags.empty?
+        @context.evaluate_with_tags(self, @tags, opts)
+      else
+        @context.evaluate(self, opts)
+      end
     end
 
     def build(params)
