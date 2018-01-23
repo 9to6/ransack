@@ -2,6 +2,7 @@ module Ransack
   module Tag
     def build_params_for_tag(params)
       return {} if params.empty?
+      @tags = [] if @tags.nil?
       ret = {}
       params.keys.each do |key|
         # key for sorting is ignored
@@ -9,6 +10,7 @@ module Ransack
         res = parse_tags_on_ransack(params[key])
         # change keyword without tags
         params[key] = res[:search_keyword]
+        @tags.concate(res[:tags])
       end
       params.merge!(ret)
     end
