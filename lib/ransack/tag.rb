@@ -9,7 +9,7 @@ module Ransack
         res = parse_tags_on_ransack(params[key])
         # change keyword without tags
         params[key] = res[:search_keyword]
-        @tags.concate(res[:tags])
+        @tags.concat(res[:tags])
       end
       params.merge!(ret)
     end
