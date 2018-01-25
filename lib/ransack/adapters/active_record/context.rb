@@ -41,9 +41,11 @@ module Ransack
           opts[:distinct] ? relation.distinct : relation
         end
 
-        def evaluate_with_tags(search, tags, opts = {})
+        def evaluate_with_tags(search, tags, owner, opts = {})
           viz = Visitor.new
-					relation = @object.tagged_with(tags).where(viz.accept(search.base))
+          options = {}
+          options[:owned_by] = owner if not owner.nil?
+          relation = @object.tagged_with(tags, options).where(viz.accept(search.base))
           if search.sorts.any?
             relation = relation.except(:order).reorder(viz.accept(search.sorts))
           end

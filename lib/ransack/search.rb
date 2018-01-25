@@ -27,6 +27,7 @@ module Ransack
       # on tag mode
       @tags = []
       if options.has_key?(:tag_mode)
+        @tag_owner = options[:owned_by] if options.has_key?(:owned_by)
         build_params_for_tag(params)
       end
 
@@ -42,7 +43,7 @@ module Ransack
 
     def result(opts = {})
       if object.respond_to?(:tagged_with) and !@tags.empty?
-        @context.evaluate_with_tags(self, @tags, opts)
+        @context.evaluate_with_tags(self, @tags, @tag_owner, opts)
       else
         @context.evaluate(self, opts)
       end
