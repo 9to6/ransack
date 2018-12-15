@@ -1,15 +1,16 @@
-# Ransack
+# ![Ransack](./logo/ransack-h.png "Ransack")
 
 [![Build Status](https://travis-ci.org/activerecord-hackery/ransack.svg)](https://travis-ci.org/activerecord-hackery/ransack)
 [![Gem Version](https://badge.fury.io/rb/ransack.svg)](http://badge.fury.io/rb/ransack)
 [![Code Climate](https://codeclimate.com/github/activerecord-hackery/ransack/badges/gpa.svg)](https://codeclimate.com/github/activerecord-hackery/ransack)
+[![Backers on Open Collective](https://opencollective.com/ransack/backers/badge.svg)](#backers) [![Sponsors on Open Collective](https://opencollective.com/ransack/sponsors/badge.svg)](#sponsors) 
 
 Ransack is a rewrite of [MetaSearch](https://github.com/activerecord-hackery/meta_search)
 created by [Ernie Miller](http://twitter.com/erniemiller)
 and developed/maintained for years by
 [Jon Atack](http://twitter.com/jonatack) and
 [Ryan Bigg](http://twitter.com/ryanbigg) with the help of a great group of
-[contributors](https://github.com/activerecord-hackery/ransack/graphs/contributors).
+[contributors](https://github.com/activerecord-hackery/ransack/graphs/contributors). Ransack's logo is designed by [Anıl Kılıç](https://github.com/anilkilic).
 While it supports many of the same features as MetaSearch, its underlying
 implementation differs greatly from MetaSearch,
 and backwards compatibility is not a design goal.
@@ -27,13 +28,12 @@ instead.
 If you're viewing this at
 [github.com/activerecord-hackery/ransack](https://github.com/activerecord-hackery/ransack),
 you're reading the documentation for the master branch with the latest features.
-[View documentation for the last release (1.8.2).](https://github.com/activerecord-hackery/ransack/tree/v1.8.2)
+[View documentation for the last release (2.0.0).](https://github.com/activerecord-hackery/ransack/tree/v2.0.0)
 
 ## Getting started
 
-Ransack is compatible with Rails 3, 4 and 5 on Ruby 1.9 and later.
-JRuby 9 ought to work as well (see
-[this](https://github.com/activerecord-hackery/polyamorous/issues/17)).
+Ransack is compatible with Rails 5.0, 5.1 and 5.2 on Ruby 2.2 and later.
+If you are using Rails <5.0 use the 1.8 line of Ransack.
 If you are using Ruby 1.8 or an earlier JRuby and run into compatibility
 issues, you can use an earlier version of Ransack, say, up to 1.3.0.
 
@@ -133,6 +133,11 @@ which are defined in
 <% end %>
 ```
 
+The argument of `f.search_field` has to be in this form:
+ `attribute_name[_or_attribute_name]..._predicate`
+
+where `[_or_another_attribute_name]...` means any repetition of `_or_` plus the name of the attribute.
+
 `cont` (contains) and `start` (starts with) are just two of the available
 search predicates. See
 [Constants](https://github.com/activerecord-hackery/ransack/blob/master/lib/ransack/constants.rb)
@@ -197,6 +202,23 @@ This example toggles the sort directions of both fields, by default
 initially sorting the `last_name` field by ascending order, and the
 `first_name` field by descending order.
 
+In the case that you wish to sort by some complex value, such as the result
+of a SQL function, you may do so using scopes. In your model, define scopes
+whose names line up with the name of the virtual field you wish to sort by,
+as so:
+
+```ruby
+class Person < ActiveRecord::Base
+  scope :sort_by_reverse_name_asc, lambda { order("REVERSE(name) ASC") }
+  scope :sort_by_reverse_name_desc, lambda { order("REVERSE(name) DESC") }
+...
+```
+
+and you can then sort by this virtual field:
+
+```erb
+<%= sort_link(@q, :reverse_name) %>
+```
 
 The sort link order indicator arrows may be globally customized by setting a
 `custom_arrows` option in an initializer file like
@@ -412,28 +434,60 @@ query parameters in your URLs.
 
 List of all possible predicates
 
-* `*_eq` - equal
-* `*_not_eq` - not equal
-* `*_matches` - matches with `LIKE`, e.g. `q[email_matches]=%@gmail.com`
-* Also: `*_does_not_match`, `*_matches_any`, `*_matches_all`, `*_does_not_match_any`, `*_does_not_match_all`
-* `*_lt` - less than
-* `*_lteq` - less than or equal
-* `*_gt` - greater than
-* `*_gteq` - greater than or equal
-* `*_present` - not null and not empty, e.g. `q[name_present]=1` (SQL: `col is not null AND col != ''`)
-* `*_blank` - is null or empty. (SQL: `col is null OR col = ''`)
-* `*_null`, `*_not_null` - is null, is not null
-* `*_in` - match any values in array, e.g. `q[name_in][]=Alice&q[name_in][]=Bob`
-* `*_not_in` - match none of values in array
-* `*_lt_any`, `*_lteq_any`, `*_gt_any`, `*_gteq_any` - Compare to list of values, at least positive. (SQL: `col > value1 OR col > value2`)
-* `*_matches_any`, `*_does_not_match_any` - same as above but with `LIKE`
-* `*_lt_all`, `*_lteq_all`, `*_gt_all`, `*_gteq_all` - Compare to list of values, all positive. (SQL: `col > value1 AND col > value2`)
-* `*_matches_all`, `*_does_not_match_all` - same as above but with `LIKE`
-* `*_not_eq_all` - none of values in a set
-* `*_start`, `*_not_start`, `*_start_any`, `*_start_all`, `*_not_start_any`, `*_not_start_all` - start with, (SQL: `col LIKE 'value%'`)
-* `*_end`, `*_not_end`, `*_end_any`, `*_end_all`, `*_not_end_any`, `*_not_end_all` - end with, (SQL: `col LIKE '%value'`)
-* `*_cont`, `*_cont_any`, `*_cont_all`, `*_not_cont`, `*_not_cont_any`, `*_not_cont_all` - contains value, using `LIKE`
-* `*_true`, `*_false` - is true and is false
+
+| Predicate | Description | Notes |
+| ------------- | ------------- |-------- |
+| `*_eq`  | equal  | |
+| `*_not_eq` | not equal | |
+| `*_matches` | matches with `LIKE` | e.g. `q[email_matches]=%@gmail.com`|
+| `*_does_not_match` | does not match with `LIKE` | |
+| `*_matches_any` | Matches any | |
+| `*_matches_all` | Matches all  | |
+| `*_does_not_match_any` | Does not match any | |
+| `*_does_not_match_all` | Does not match all | |
+| `*_lt` | less than | |
+| `*_lteq` | less than or equal | |
+| `*_gt` | greater than | |
+| `*_gteq` | greater than or equal | |
+| `*_present` | not null and not empty | Only compatible with string columns. Example: `q[name_present]=1` (SQL: `col is not null AND col != ''`) |
+| `*_blank` | is null or empty. | (SQL: `col is null OR col = ''`) |
+| `*_null` | is null | |
+| `*_not_null` | is not null | |
+| `*_in` | match any values in array | e.g. `q[name_in][]=Alice&q[name_in][]=Bob` |
+| `*_not_in` | match none of values in array | |
+| `*_lt_any` | Less than any |  SQL: `col < value1 OR col < value2` |
+| `*_lteq_any` | Less than or equal to any | |
+| `*_gt_any` | Greater than any | |
+| `*_gteq_any` | Greater than or equal to any | |
+| `*_matches_any` | `*_does_not_match_any` | same as above but with `LIKE` |
+| `*_lt_all` | Less than all | SQL: `col < value1 AND col < value2` |
+| `*_lteq_all` | Less than or equal to all | |
+| `*_gt_all` | Greater than all | |
+| `*_gteq_all` | Greater than or equal to all | |
+| `*_matches_all` | Matches all | same as above but with `LIKE` |
+| `*_does_not_match_all` | Does not match all | |
+| `*_not_eq_all` | none of values in a set | |
+| `*_start` | Starts with | SQL: `col LIKE 'value%'` |
+| `*_not_start` | Does not start with | |
+| `*_start_any` | Starts with any of | |
+| `*_start_all` | Starts with all of | |
+| `*_not_start_any` | Does not start with any of | |
+| `*_not_start_all` | Does not start with all of | |
+| `*_end` | Ends with | SQL: `col LIKE '%value'` |
+| `*_not_end` | Does not end with | |
+| `*_end_any` | Ends with any of | |
+| `*_end_all` | Ends with all of | |
+| `*_not_end_any` | | |
+| `*_not_end_all` | | |
+| `*_cont` | Contains value | uses `LIKE` |
+| `*_cont_any` | Contains any of | |
+| `*_cont_all` | Contains all of | |
+| `*_not_cont` | Does not contain |
+| `*_not_cont_any` | Does not contain any of | |
+| `*_not_cont_all` | Does not contain all of | |
+| `*_true` | is true | |
+| `*_false` | is false | |
+
 
 (See full list: https://github.com/activerecord-hackery/ransack/blob/master/lib/ransack/locale/en.yml#L15 and [wiki](https://github.com/activerecord-hackery/ransack/wiki/Basic-Searching))
 
@@ -452,7 +506,7 @@ avoid returning duplicate rows, even if conditions on a join would otherwise
 result in some. It generates the same SQL as calling `uniq` on the relation.
 
 Please note that for many databases, a sort on an associated table's columns
-may result in invalid SQL with `distinct: true` -- in those cases, you will
+may result in invalid SQL with `distinct: true` -- in those cases, you
 will need to modify the result as needed to allow these queries to work.
 
 For example, you could call joins and includes on the result which has the
@@ -481,6 +535,20 @@ def index
               .select('people.*, articles.name, articles.description')
               .page(params[:page])
 end
+```
+
+Another method to approach this when using Postgresql is to use ActiveRecords's `.includes` in combination with `.group` instead of `distinct: true`.
+
+For example:
+```ruby
+def index
+  @q = Person.ransack(params[:q])
+  @people = @q.result
+              .group('persons.id')
+              .includes(:articles)
+              .page(params[:page])
+end
+
 ```
 
 A final way of last resort is to call `to_a.uniq` on the collection at the end
@@ -667,13 +735,26 @@ boolean. This is currently resolved in Rails 5 :smiley:
 However, perhaps you have `user_id: [1]` and you do not want Ransack to convert
 1 into a boolean. (Values sanitized to booleans can be found in the
 [constants.rb](https://github.com/activerecord-hackery/ransack/blob/master/lib/ransack/constants.rb#L28)).
-To turn this off, and handle type conversions yourself, set
+To turn this off globally, and handle type conversions yourself, set
 `sanitize_custom_scope_booleans` to false in an initializer file like
 config/initializers/ransack.rb:
 
 ```ruby
 Ransack.configure do |c|
   c.sanitize_custom_scope_booleans = false
+end
+```
+
+To turn this off on a per-scope basis Ransack adds the following method to
+`ActiveRecord::Base` that you can redefine to selectively override sanitization:
+
+`ransackable_scopes_skip_sanitize_args`
+
+Add the scope you wish to bypass this behavior to ransackable_scopes_skip_sanitize_args:
+
+```ruby
+def ransackable_scopes_skip_sanitize_args
+  [:scope_to_skip_sanitize_args]
 end
 ```
 
@@ -808,6 +889,7 @@ en:
 
 ## Mongoid
 
+Mongoid support has been moved to its own gem at [ransack-mongoid](https://github.com/activerecord-hackery/ransack-mongoid).
 Ransack works with Mongoid in the same way as Active Record, except that with
 Mongoid, associations are not currently supported. Demo source code may be found
 [here](https://github.com/Zhomart/ransack-mongodb-demo). A `result` method
@@ -852,3 +934,32 @@ directly related to bug reports, pull requests, or documentation improvements.
 * Spread the word on Twitter, Facebook, and elsewhere if Ransack's been useful
 to you. The more people who are using the project, the quicker we can find and
 fix bugs!
+
+## Contributors
+
+This project exists thanks to all the people who contribute. <img src="https://opencollective.com/ransack/contributors.svg?width=890&button=false" />
+
+
+## Backers
+
+Thank you to all our backers! 🙏 [[Become a backer](https://opencollective.com/ransack#backer)]
+
+<a href="https://opencollective.com/ransack#backers" target="_blank"><img src="https://opencollective.com/ransack/backers.svg?width=890"></a>
+
+
+## Sponsors
+
+Support this project by becoming a sponsor. Your logo will show up here with a link to your website. [[Become a sponsor](https://opencollective.com/ransack#sponsor)]
+
+<a href="https://opencollective.com/ransack/sponsor/0/website" target="_blank"><img src="https://opencollective.com/ransack/sponsor/0/avatar.svg"></a>
+<a href="https://opencollective.com/ransack/sponsor/1/website" target="_blank"><img src="https://opencollective.com/ransack/sponsor/1/avatar.svg"></a>
+<a href="https://opencollective.com/ransack/sponsor/2/website" target="_blank"><img src="https://opencollective.com/ransack/sponsor/2/avatar.svg"></a>
+<a href="https://opencollective.com/ransack/sponsor/3/website" target="_blank"><img src="https://opencollective.com/ransack/sponsor/3/avatar.svg"></a>
+<a href="https://opencollective.com/ransack/sponsor/4/website" target="_blank"><img src="https://opencollective.com/ransack/sponsor/4/avatar.svg"></a>
+<a href="https://opencollective.com/ransack/sponsor/5/website" target="_blank"><img src="https://opencollective.com/ransack/sponsor/5/avatar.svg"></a>
+<a href="https://opencollective.com/ransack/sponsor/6/website" target="_blank"><img src="https://opencollective.com/ransack/sponsor/6/avatar.svg"></a>
+<a href="https://opencollective.com/ransack/sponsor/7/website" target="_blank"><img src="https://opencollective.com/ransack/sponsor/7/avatar.svg"></a>
+<a href="https://opencollective.com/ransack/sponsor/8/website" target="_blank"><img src="https://opencollective.com/ransack/sponsor/8/avatar.svg"></a>
+<a href="https://opencollective.com/ransack/sponsor/9/website" target="_blank"><img src="https://opencollective.com/ransack/sponsor/9/avatar.svg"></a>
+
+

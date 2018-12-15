@@ -1,5 +1,132 @@
 # Change Log
 
+## Unreleased
+
+## Version 2.1.1 - 2018-12-05
+
+* Add `arabic` translation
+  https://github.com/activerecord-hackery/ransack/pull/979
+
+* Deprecate #search
+  PR [975](https://github.com/activerecord-hackery/ransack/pull/975)
+
+## Version 2.1.0 - 2018-10-26
+
+* Add support for sorting by scopes
+  PR [973](https://github.com/activerecord-hackery/ransack/pull/973)
+
+  *Diego Borges*
+
+* Added a new logo for Ransack
+  PR [972](https://github.com/activerecord-hackery/ransack/pull/972)
+
+  *Anıl Kılıç*, *Greg Molnar*
+
+* Greek translations
+  PR [971](https://github.com/activerecord-hackery/ransack/pull/971)
+  PR [960](https://github.com/activerecord-hackery/ransack/pull/960)
+
+  *Sean Carroll*, *Greg Molnar*
+
+* README improvements
+  PR [963](https://github.com/activerecord-hackery/ransack/pull/963)
+
+  *tommaso1*
+
+* Bulgarian translations
+  PR [961](https://github.com/activerecord-hackery/ransack/pull/961)
+
+  *Sean Carroll*
+
+* README improvements
+  PR [956](https://github.com/activerecord-hackery/ransack/pull/956)
+
+  *Alex Konoval*
+
+* Remove lib/ransack/adapters/active_record/compat.rb
+  PR [954](https://github.com/activerecord-hackery/ransack/pull/954)
+
+  *Ryuta Kamizono*
+
+* Remove unused aliases
+  PR [953](https://github.com/activerecord-hackery/ransack/pull/953)
+
+  *Ryuta Kamizono*
+
+## Version 2.0.1 - 2018-08-18
+
+* Don't return association if table is nil
+  PR [952](https://github.com/activerecord-hackery/ransack/pull/952)
+
+  *Christian Gregg*
+
+## Version 2.0.0 - 2018-08-09
+
+* Add support for Active Record 5.2.1
+  PR [#938](https://github.com/activerecord-hackery/ransack/pull/938)
+
+* Fix sort with joins on existing association
+  PR [#937](https://github.com/activerecord-hackery/ransack/pull/937)
+
+* Add the ability to skip arg sanitization on a per scope basis. Using
+  `ransackable_scopes_skip_sanitize_args`, users can define a list of
+  scopes which will bypass parameter sanitization. This allows passing 0,
+  1, t, f, etc. to a scope as an actual parameter.
+  PR [#933](https://github.com/activerecord-hackery/ransack/pull/933)
+
+* Drop support for Active Record < 5.0.
+  PR [#929](https://github.com/activerecord-hackery/ransack/pull/929)
+
+* Extract mongoid support to a separate gem.
+  PR [#928](https://github.com/activerecord-hackery/ransack/pull/928)
+
+* Absorb polyamorous
+  PR [#927](https://github.com/activerecord-hackery/ransack/pull/927)
+
+* Fix broken monkey patch of #form_with
+  PR [#922](https://github.com/activerecord-hackery/ransack/pull/922)
+
+## Version 1.8.8 - 2018-03-16
+* Fix multiple database support
+  PR [#893](https://github.com/activerecord-hackery/ransack/pull/893)
+
+* Updated Dutch translations
+  PR [#887](https://github.com/activerecord-hackery/ransack/pull/887)
+
+* Fixed no method error 'asc' for Rails 4.2
+  PR [#885](https://github.com/activerecord-hackery/ransack/pull/885)
+
+
+## Version 1.8.7 - 2018-02-05
+
+* Rails 5.2 support
+  PR [#868](https://github.com/activerecord-hackery/ransack/pull/868)
+
+* Lock pg gem to 0.21 to support older releases
+
+* Warnings cleanup
+  PR [#867](https://github.com/activerecord-hackery/ransack/pull/867)
+
+* Wildcard escaping
+  PR [#866]
+
+## Version 1.8.6 - 2018-01-23
+
+### Added
+
+* Improve memory usage
+  PR [#820](https://github.com/activerecord-hackery/ransack/pull/820)
+
+* Bump Polyamorous version to 1.3.2
+  PR [#858](https://github.com/activerecord-hackery/ransack/pull/858)
+
+## Version 1.8.5
+
+### Added
+
+* Added Turkish Translations
+  PR [#835](https://github.com/activerecord-hackery/ransack/issues/835).
+
 ## Version 1.8.4 - 2017-10-09
 
 ### Added
@@ -21,7 +148,7 @@
 
 *   No need pass some arugments to JoinAssociation#join_constraints in Rails 5.1.
     PR [#814](https://github.com/activerecord-hackery/ransack/pull/814).
-    Fixes [#807](https://github.com/activerecord-hackery/ransack/issues/807). 
+    Fixes [#807](https://github.com/activerecord-hackery/ransack/issues/807).
     Reference [rails/rails#28267](https://github.com/rails/rails/pull/28267)
     and [rails/rails#27851](https://github.com/rails/rails/pull/27851).
 

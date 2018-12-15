@@ -18,6 +18,13 @@ module Ransack
             expect(subject.object).to be_an ::ActiveRecord::Relation
           end
 
+          context "multiple database connection" do
+            it "does not raise error" do
+              expect { Person.ransack(name_cont: "test") }.not_to raise_error
+              expect { SubDB::OperationHistory.ransack(people_id_eq: 1) }.not_to raise_error
+            end
+          end
+
           context 'with scopes' do
             before do
               allow(Person)
@@ -90,6 +97,25 @@ module Ransack
                 expect(s.result.to_sql).to (include 'age > 0')
               end
             end
+
+            context "with ransackable_scopes_skip_sanitize_args enabled for scope" do
+              before do
+                allow(Person)
+                .to receive(:ransackable_scopes_skip_sanitize_args)
+                .and_return([:over_age])
+              end
+
+              it 'passes true values to scopes' do
+                s = Person.ransack('over_age' => 1)
+                expect(s.result.to_sql).to (include 'age > 1')
+              end
+
+              it 'passes false values to scopes'  do
+                s = Person.ransack('over_age' => 0)
+                expect(s.result.to_sql).to (include 'age > 0')
+              end
+            end
+
           end
 
           it 'does not raise exception for string :params argument' do
@@ -429,6 +455,16 @@ module Ransack
             end
           end
 
+          it 'sorts with different join variants' do
+            comments = [
+              Comment.create(article: Article.create(title: 'Avenger'), person: Person.create(salary: 100_000)),
+              Comment.create(article: Article.create(title: 'Avenge'), person: Person.create(salary: 50_000)),
+            ]
+            expect(Comment.ransack(article_title_cont: 'aven',s: 'person_salary desc').result).to eq(comments)
+            expect(Comment.joins(:person).ransack(s: 'persons_salarydesc', article_title_cont: 'aven').result).to eq(comments)
+            expect(Comment.joins(:person).ransack(article_title_cont: 'aven',s: 'persons_salary desc').result).to eq(comments)
+          end
+
           it 'allows sort by `only_sort` field' do
             s = Person.ransack(
               's' => { '0' => { 'dir' => 'asc', 'name' => 'only_sort' } }
@@ -505,6 +541,7 @@ module Ransack
             )
           end
 
+
           it 'should allow passing ransacker arguments to a ransacker' do
             s = Person.ransack(
               c: [{
@@ -543,6 +580,37 @@ module Ransack
             expect(s.result.to_sql).to match(
               /BETWEEN 2 AND 6 GROUP BY articles.person_id \) DESC/
             )
+          end
+
+          context 'case insensitive sorting' do
+            it 'allows sort by desc' do
+              search = Person.ransack(sorts: ['name_case_insensitive desc'])
+              expect(search.result.to_sql).to match /ORDER BY LOWER(.*) DESC/
+            end
+
+            it 'allows sort by asc' do
+              search = Person.ransack(sorts: ['name_case_insensitive asc'])
+              expect(search.result.to_sql).to match /ORDER BY LOWER(.*) ASC/
+            end
+          end
+
+          context 'regular sorting' do
+            it 'allows sort by desc' do
+              search = Person.ransack(sorts: ['name desc'])
+              expect(search.result.to_sql).to match /ORDER BY .* DESC/
+            end
+
+            it 'allows sort by asc' do
+              search = Person.ransack(sorts: ['name asc'])
+              expect(search.result.to_sql).to match /ORDER BY .* ASC/
+            end
+          end
+
+          context 'sorting by a scope' do
+            it 'applies the correct scope' do
+              search = Person.ransack(sorts: ['reverse_name asc'])
+              expect(search.result.to_sql).to include("ORDER BY REVERSE(name) ASC")
+            end
           end
         end
 
@@ -609,6 +677,12 @@ module Ransack
 
         describe '#ransackable_scopes' do
           subject { Person.ransackable_scopes }
+
+          it { should eq [] }
+        end
+
+        describe '#ransackable_scopes_skip_sanitize_args' do
+          subject { Person.ransackable_scopes_skip_sanitize_args }
 
           it { should eq [] }
         end

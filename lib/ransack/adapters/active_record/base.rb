@@ -14,6 +14,7 @@ module Ransack
         end
 
         def ransack(params = {}, options = {})
+          ActiveSupport::Deprecation.warn("#search is deprecated and will be removed in 2.3, please use #ransack instead") if __callee__ == :search
           Search.new(self, params, options)
         end
 
@@ -32,7 +33,7 @@ module Ransack
         # For overriding with a whitelist array of strings.
         #
         def ransackable_attributes(auth_object = nil)
-          if Ransack::SUPPORTS_ATTRIBUTE_ALIAS
+          @ransackable_attributes ||= if Ransack::SUPPORTS_ATTRIBUTE_ALIAS
             column_names + _ransackers.keys + _ransack_aliases.keys +
             attribute_aliases.keys
           else
@@ -45,7 +46,7 @@ module Ransack
         # For overriding with a whitelist array of strings.
         #
         def ransackable_associations(auth_object = nil)
-          reflect_on_all_associations.map { |a| a.name.to_s }
+          @ransackable_associations ||= reflect_on_all_associations.map { |a| a.name.to_s }
         end
 
         # Ransortable_attributes, by default, returns the names
@@ -61,6 +62,14 @@ module Ransack
         # For overriding with a whitelist array of *symbols*.
         #
         def ransackable_scopes(auth_object = nil)
+          []
+        end
+
+        # ransack_scope_skip_sanitize_args, by default, returns an empty array.
+        # i.e. use the sanitize_scope_args setting to determin if args should be converted.
+        # For overriding with a list of scopes which should be passed the args as-is.
+        #
+        def ransackable_scopes_skip_sanitize_args
           []
         end
 

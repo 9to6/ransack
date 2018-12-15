@@ -30,22 +30,20 @@ module Ransack
       @associations_pot = {}
       @lock_associations = []
 
-      if ::ActiveRecord::VERSION::STRING >= Constants::RAILS_4_1
+      if ::ActiveRecord::VERSION::STRING >= Constants::RAILS_5_2
+        @base = @join_dependency.instance_variable_get(:@join_root)
+      else
         @base = @join_dependency.join_root
         @engine = @base.base_klass.arel_engine
-      else
-        @base = @join_dependency.join_base
-        @engine = @base.arel_engine
       end
+    end
 
-      @default_table = Arel::Table.new(
-        @base.table_name, as: @base.aliased_table_name, type_caster: self
-        )
-      @bind_pairs = Hash.new do |hash, key|
-        parent, attr_name = get_parent_and_attribute_name(key)
-        if parent && attr_name
-          hash[key] = [parent, attr_name]
-        end
+    def bind_pair_for(key)
+      @bind_pairs ||= {}
+
+      @bind_pairs[key] ||= begin
+        parent, attr_name = get_parent_and_attribute_name(key.to_s)
+        [parent, attr_name] if parent && attr_name
       end
     end
 
@@ -54,10 +52,6 @@ module Ransack
         obj
       elsif obj.respond_to? :klass
         obj.klass
-      elsif obj.respond_to? :active_record  # Rails 3
-        obj.active_record
-      elsif obj.respond_to? :base_klass     # Rails 4
-        obj.base_klass
       else
         raise ArgumentError, "Don't know how to klassify #{obj.inspect}"
       end

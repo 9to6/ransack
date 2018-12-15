@@ -25,26 +25,12 @@ else
 end
 
 class Person < ActiveRecord::Base
-  if ::ActiveRecord::VERSION::MAJOR == 3
-    default_scope order('id DESC')
-  else
-    default_scope { order(id: :desc) }
-  end
+  default_scope { order(id: :desc) }
   belongs_to :parent, class_name: 'Person', foreign_key: :parent_id
   has_many   :children, class_name: 'Person', foreign_key: :parent_id
   has_many   :articles
-  if ActiveRecord::VERSION::MAJOR == 3
-    if RUBY_VERSION >= '2.3'
-      has_many :published_articles, class_name: "Article",
-        conditions: "published = 't'"
-    else
-      has_many :published_articles, class_name: "Article",
-        conditions: { published: true }
-    end
-  else
-    has_many :published_articles, ->{ where(published: true) },
+  has_many :published_articles, ->{ where(published: true) },
       class_name: "Article"
-  end
   has_many   :comments
   has_many   :authored_article_comments, through: :articles,
              source: :comments, foreign_key: :person_id
@@ -56,6 +42,9 @@ class Person < ActiveRecord::Base
   scope :of_age,      lambda { |of_age|
     of_age ? where("age >= ?", 18) : where("age < ?", 18)
   }
+
+  scope :sort_by_reverse_name_asc, lambda { order(Arel.sql("REVERSE(name) ASC")) }
+  scope :sort_by_reverse_name_desc, lambda { order("REVERSE(name) DESC") }
 
   alias_attribute :full_name, :name
 
@@ -92,8 +81,13 @@ class Person < ActiveRecord::Base
       )
   end
 
+
   ransacker :sql_literal_id do
     Arel.sql('people.id')
+  end
+
+  ransacker :name_case_insensitive, type: :string do
+    arel_table[:name].lower
   end
 
   ransacker :with_arguments, args: [:parent, :ransacker_args] do |parent, args|
@@ -109,6 +103,7 @@ class Person < ActiveRecord::Base
     .squish
     Arel.sql(query)
   end
+
 
   def self.ransackable_attributes(auth_object = nil)
     if auth_object == :admin
@@ -138,11 +133,7 @@ class Article < ActiveRecord::Base
 
   alias_attribute :content, :body
 
-  if ::ActiveRecord::VERSION::STRING >= '3.1'
-    default_scope { where("'default_scope' = 'default_scope'") }
-  else # Rails 3.0 does not accept a block
-    default_scope where("'default_scope' = 'default_scope'")
-  end
+  default_scope { where("'default_scope' = 'default_scope'") }
 end
 
 class Recommendation < ActiveRecord::Base
@@ -253,5 +244,32 @@ module Schema
       body: 'First post!',
       article: Article.make(title: 'Hello, world!')
     )
+  end
+end
+
+module SubDB
+  class Base < ActiveRecord::Base
+    self.abstract_class = true
+    establish_connection(
+      adapter: 'sqlite3',
+      database: ':memory:'
+    )
+  end
+
+  class OperationHistory < Base
+  end
+
+  module Schema
+    def self.create
+      s = ::ActiveRecord::Schema.new
+      s.instance_variable_set(:@connection, SubDB::Base.connection)
+      s.verbose = false
+      s.define({}) do
+        create_table :operation_histories, force: true do |t|
+          t.string  :operation_type
+          t.integer :people_id
+        end
+      end
+    end
   end
 end

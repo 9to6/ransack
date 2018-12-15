@@ -232,8 +232,8 @@ module Ransack
       # https://github.com/activerecord-hackery/ransack/issues/374
       #
       it 'evaluates conditions for multiple `belongs_to` associations to the
-      same table contextually',
-      if: ::ActiveRecord::VERSION::STRING.first(3) == '4.0' do
+      same table contextually' do
+        skip "Make this spec pass for Rails >5.0"
         s = Search.new(
           Recommendation,
           person_name_eq: 'Ernie',
@@ -314,6 +314,11 @@ module Ransack
         .to eq(10)
         expect(s.result.send(all_or_load).send(uniq_or_distinct))
         .to eq s.result(distinct: true).send(all_or_load)
+      end
+
+      it 'evaluates joins with belongs_to join' do
+        s = Person.joins(:parent).ransack(parent_name_eq: 'Ernie').result(distinct: true)
+        expect(s).to be_an ActiveRecord::Relation
       end
 
       private

@@ -6,8 +6,20 @@ module ActionView::Helpers::Tags
   # https://github.com/rails/rails/commit/c1a118a
   class Base
     private
-    def value(object)
-      object.send @method_name if object # use send instead of public_send
+    if defined? ::ActiveRecord
+      if ::ActiveRecord::VERSION::STRING < '5.2'
+        def value(object)
+          object.send @method_name if object # use send instead of public_send
+        end
+      else # rails/rails#29791
+        def value
+          if @allow_method_names_outside_object
+            object.send @method_name if object && object.respond_to?(@method_name, true)
+          else
+            object.send @method_name if object
+          end
+        end
+      end
     end
   end
 end
@@ -237,7 +249,7 @@ module Ransack
             Translate.association(base, :context => object.context),
             collection_for_base(action, base)
           ]
-        rescue UntraversableAssociationError => e
+        rescue UntraversableAssociationError
           nil
         end
       end

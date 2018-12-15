@@ -49,11 +49,7 @@ module Ransack
       alias :c= :conditions=
 
       def [](key)
-        if condition = conditions.detect { |c| c.key == key.to_s }
-          condition
-        else
-          nil
-        end
+        conditions.detect { |c| c.key == key.to_s }
       end
 
       def []=(key, value)
@@ -68,7 +64,6 @@ module Ransack
       def respond_to?(method_id)
         super or begin
           method_name = method_id.to_s
-          writer = method_name.sub!(/\=$/, ''.freeze)
           attribute_method?(method_name) ? true : false
         end
       end
@@ -191,7 +186,7 @@ module Ransack
       end
 
       def strip_predicate_and_index(str)
-        string = str.split(/\(/).first
+        string = str[/(.+?)\(/, 1] || str.dup
         Predicate.detect_and_strip_from_string!(string)
         string
       end

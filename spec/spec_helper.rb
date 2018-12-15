@@ -37,12 +37,14 @@ RSpec.configure do |config|
     line = '=' * message.length
     puts line, message, line
     Schema.create
+    SubDB::Schema.create
   end
 
   config.before(:all)   { Sham.reset(:before_all) }
   config.before(:each)  { Sham.reset(:before_each) }
 
   config.include RansackHelper
+  config.include PolyamorousHelper
 end
 
 RSpec::Matchers.define :be_like do |expected|
